@@ -2,36 +2,32 @@ package entity;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import main.*;
 
 public class Player extends Entity{
-    GamePanel gp; // referensi gamepanel
     KeyHandler keyH; // referensi keyhandler
 
     public final int screenX; // var layar x 
     public final int screenY; // var layar y
 
-    public int hasKey = 0; // var punya kunci default
+    int standConter = 0; // var pada saat diam
 
     // fungsi player
     public Player(GamePanel gp, KeyHandler keyH) {
-        this.gp = gp; // instansiasi GamePanel
+        super(gp); // referensi ke konstruktor entity
         this.keyH = keyH; // instansiasi keyHanlder
 
         screenX = gp.screenWidth/2 - (gp.tileSize/2); // player berada di tengah layar x
         screenY = gp.screenHeight/2 - (gp.tileSize/2); // player berada di tengah layar y
 
         solidArea = new Rectangle(); // instance area solid player
-        solidArea.x = 8; // ukuran player dikecilkan 8 pada x
-        solidArea.y = 16; // ukuran player dikecilkan 16 pada y
+        solidArea.x = 14; // ukuran player dikecilkan 8 pada x
+        solidArea.y = 40; // ukuran player dikecilkan 16 pada y
         solidAreaDX = solidArea.x; // ukuran area objek x
         solidAreaDY = solidArea.y; // ukuran area objek y
-        solidArea.width = gp.tileSize - 16; // lebar blok solid player / 32
-        solidArea.height = gp.tileSize - 16; // tinggi blok solid player / 32
+        solidArea.width = gp.tileSize - 27; // lebar blok solid player / 32
+        solidArea.height = gp.tileSize - 45; // tinggi blok solid player / 32
 
         setDefaultValues(); // atur posisi awal
         getPalayerImage(); // memuat sprite player 
@@ -47,28 +43,23 @@ public class Player extends Entity{
 
     // fungsi untuk memuat gambar player
     public void getPalayerImage() {
-        try {
-            // memuat gambar setiap arah
-            up = ImageIO.read(getClass().getResourceAsStream("/res/player/belakang_diam.png"));
-            up1 = ImageIO.read(getClass().getResourceAsStream("/res/player/belakang_kiri.png"));
-            up2 = ImageIO.read(getClass().getResourceAsStream("/res/player/belakang_kanan.png"));
-            down = ImageIO.read(getClass().getResourceAsStream("/res/player/depan_diam.png"));
-            down1 = ImageIO.read(getClass().getResourceAsStream("/res/player/depan_kiri.png"));
-            down2 = ImageIO.read(getClass().getResourceAsStream("/res/player/depan_kanan.png"));
-            left = ImageIO.read(getClass().getResourceAsStream("/res/player/kanan_diam.png"));
-            left1 = ImageIO.read(getClass().getResourceAsStream("/res/player/kanan_kiri.png"));
-            left2 = ImageIO.read(getClass().getResourceAsStream("/res/player/kanan_kanan.png"));
-            right = ImageIO.read(getClass().getResourceAsStream("/res/player/kiri_diam.png"));
-            right1 = ImageIO.read(getClass().getResourceAsStream("/res/player/kiri_kiri.png"));
-            right2 = ImageIO.read(getClass().getResourceAsStream("/res/player/kiri_kanan.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        up = setup("/player/up_guard");
+        up1 = setup("/player/up_1");
+        up2 = setup("/player/up_2");
+        down = setup("/player/down_guard");
+        down1 = setup("/player/down_1");
+        down2 = setup("/player/down_2");
+        left = setup("/player/left_guard");
+        left1 = setup("/player/left_1");
+        left2 = setup("/player/left_2");
+        right = setup("/player/right_guard");
+        right1 = setup("/player/right_1");
+        right2 = setup("/player/right_2");
     }
 
     // fungsi untuk memperbaharui status pemain
     public void update() {
-        // periksa tombol yg ditekan
+        // periksa tombol yg ditekan (player jalan)
         if (keyH.upPressed == true || keyH.downPressed == true ||
                 keyH.leftPressed == true || keyH.rightPressed == true) {
             
@@ -82,14 +73,18 @@ public class Player extends Entity{
                         direction = "right";
                     }
 
-                    // cek tabrakan tile
+                    // CEK TABRAKAN TILE
                     collisionOn = false;
                     gp.cChecker.checkTile(this); // cek tile
 
-                    // cek tabrakan objeck
+                    // CEK TABRAKAN OBJEK
                     int objectIndex = gp.cChecker.checkObject(this, true); // cek objek
                     pickUpObj(objectIndex); // mengambil objek
                     
+                    // CEK TABRAKAN NPC
+                    int npcIndex = gp.cChecker.checkEntity(this, gp.npc);
+                    interactNPC(npcIndex);
+
                     // if collision = false, maka player diam
                     if (collisionOn == false) {
                         switch (direction) {
@@ -102,7 +97,7 @@ public class Player extends Entity{
 
                     // mengatur animasi gerakan
                     spriteCounter++;
-                    if (spriteCounter > 10) {
+                    if (spriteCounter > 12) {
                         if (spriteNum == 1) {
                             spriteNum = 2;
                         } else if (spriteNum == 2) {
@@ -112,8 +107,12 @@ public class Player extends Entity{
                         }
                         spriteCounter = 0;
                     }
-        } else {
-            spriteNum = 1;
+        } else { // jika player diam
+            standConter++;
+            if (standConter == 20) {
+                standConter = 0;
+                spriteNum = 1;
+            }
         }
     }
 
@@ -121,38 +120,20 @@ public class Player extends Entity{
     public void pickUpObj(int i) {
         // jika index objek valid
         if (i != 999) {
-            String objName = gp.obj[i].name; // var nama objek yg ditabrak
+            
+        }
+    }
 
-            switch (objName) { // case objek yang ditabrak
-                case "Key": // objek kunci
-                    gp.playSE(1); // play SE 1
-                    hasKey++; // tambah punci yang dimiliki
-                    gp.obj[i] = null; // hapus objek kunci
-                    gp.ui.sendMessage("Kamu mendapatkan kunci!"); // tampilkan notifikasi
-                    break;
-                case "Door": // objek pintu
-                if (hasKey > 0) { // jika pemain punya kunci
-                        gp.playSE(3); // play SE 3
-                        gp.obj[i] = null; // hilangkan objek pintu
-                        hasKey--; // kurangi jumlah kunci yang dimiliki
-                        gp.ui.sendMessage("Kamu membuka pintu!");
-                    } else {
-                        gp.ui.sendMessage("Kamu membutuhkan kunci!");
-                    }
-                    break;
-                case "Boots": // objek sepatu
-                    gp.playSE(2); // play SE 2
-                    speed += 1; // tambah speed player
-                    gp.obj[i] = null; // hapus objek sepatu
-                    gp.ui.sendMessage("Speed Up!");
-                    break;
-                case "Chest":
-                    gp.ui.gameFinished = true;
-                    gp.stopMusic();
-                    gp.playSE(4);
-                    break;
+    // fungsi interaksi npc
+    public void interactNPC(int i) {
+        if (i != 999) {
+            // jika tombol enter di klik
+            if (gp.keyH.enterPressed == true) {
+                gp.gameState = gp.dialogueState; // memuat dialog
+                gp.npc[i].speak();
             }
         }
+        gp.keyH.enterPressed = false;
     }
 
     // fungsi untuk menggambar pemain
@@ -201,6 +182,9 @@ public class Player extends Entity{
                 }
                 break;
         }
-        g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null); // gambar player
+        g2.drawImage(image, screenX, screenY, null); // gambar player
+        // cek area padat
+        // g2.setColor(Color.red);
+        // g2.drawRect(screenX + solidArea.x, screenY + solidArea.y, solidArea.width, solidArea.height);
     }
 }

@@ -1,36 +1,45 @@
 package main;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DecimalFormat;
-
-import object.OBJ_Key;
 
 public class UI {
     GamePanel gp; // referensi ke gamepanel
-    Font arial_40, arial_80B; // var font arial dengan ukuran
-    BufferedImage keyImage; // var gambar kunci
+    Graphics2D g2; // referensi ke grafik 2D
+    Font maruMonica, purisaB; // var font maru Monice dan purisa Bold
     public boolean messageOn = false; // var notifikasi
-    public String message = ""; // var tulisan notifikasi
-    int messageConter = 0; // var ?
-    public boolean gameFinished = false; // var ??
+    public String message = ""; // var text notifikasi
+    int messageConter = 0; // var waktu tampilan notifikasi
+    public boolean gameFinished = false; // var game selesai atau belum
+    public String currentDialogue = ""; // vae text dialog
     
     double playTime; // var untuk waktu main
     DecimalFormat dFormat = new DecimalFormat("#0.00"); // instance format waktu
 
-    // fungsi tampilan UI
+    // fungsi konstruktor tampilan UI
     public UI(GamePanel gp) {
         this.gp = gp; // instance gamepanel
 
-        arial_40 = new Font("Arial", Font.PLAIN, 40); // instance font arial 40
-        arial_80B = new Font("Arial", Font.BOLD, 80); // instance font arial 80
-        OBJ_Key key = new OBJ_Key(); // instance objek key
-        keyImage = key.image; // gambar kunci
+        try {
+            InputStream is = getClass().getResourceAsStream("/res/font/x12y16pxMaruMonica.ttf");
+            maruMonica = Font.createFont(Font.TRUETYPE_FONT, is); // membuat font maru Monica
+
+            is = getClass().getResourceAsStream("/res/font/Purisa Bold.ttf");
+            purisaB = Font.createFont(Font.TRUETYPE_FONT, is); // membuat font purisa bold
+        } catch (FontFormatException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    // fungsi untuk notifikasi
+    // fungsi untuk menampilkan notifikasi
     public void sendMessage(String text) {
         message = text;
         messageOn = true;
@@ -38,58 +47,72 @@ public class UI {
 
     // fungsi menggambar UI
     public void draw(Graphics2D g2) {
-        if (gameFinished ==  true) {
-            g2.setFont(arial_40);
-            g2.setColor(Color.white);
+        this.g2 = g2; // instance grafik 2D
 
-            String text;
-            int textLength;
-            int x;
-            int y;
+        g2.setFont(maruMonica); // set font maru Monica
+        // g2.setFont(purisaB); // set font Purisa Bold
+        g2.setColor(Color.WHITE);
 
-            text = "Kamu menemukan Hartakarun!!";
-            textLength = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
-            x = gp.screenWidth/2 - textLength/2;
-            y = gp.screenHeight/2 - (gp.tileSize*3);
-            g2.drawString(text, x, y);
-
-            text = "Kamu bermain selama " + dFormat.format(playTime) + "!";
-            textLength = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
-            x = gp.screenWidth/2 - textLength/2;
-            y = gp.screenHeight/2 + (gp.tileSize*4);
-            g2.drawString(text, x, y);
-
-            g2.setFont(arial_80B);
-            g2.setColor(Color.yellow);
-            text = "SELAMAT!!";
-            textLength = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
-            x = gp.screenWidth/2 - textLength/2;
-            y = gp.screenHeight/2 + (gp.tileSize*2);
-            g2.drawString(text, x, y);
-
-            gp.gameThread = null;
-        } else {
-            g2.setFont(arial_40); // memuat font
-            g2.setColor(Color.white); // memuat warna
-            g2.drawImage(keyImage, gp.tileSize/2, gp.tileSize/2, gp.tileSize, gp.tileSize, null); // gambar key
-            g2.drawString("x " + gp.player.hasKey, 74, 63); // menggambar string
-    
-            // TIME
-            playTime += (double)1/60;
-            g2.drawString("Time: " + dFormat.format(playTime), gp.tileSize*11, 63);
-
-            // MESSAGE
-            if (messageOn == true) {
-                g2.setFont(g2.getFont().deriveFont(30F));
-                g2.drawString(message, gp.tileSize/2, gp.tileSize*5);
-    
-                messageConter++;
-    
-                if (messageConter > 60) {
-                    messageConter = 0;
-                    messageOn = false;
-                }
-            }
+        // PLAY STATE
+        if (gp.gameState == gp.playState) { 
+            // 
         }
+        // PAUSE STATE
+        if (gp.gameState == gp.pauseState) { 
+            drawPauseScreen(); // memuat fungsi pause
+        }
+        // DIALOGUE STATE
+        if (gp.gameState == gp.dialogueState) {
+            drawDialogueScreen(); // memuat fungsi dialog
+        }
+    }
+
+    // fungsi saat game di pause
+    public void drawPauseScreen() {
+        g2.setFont(g2.getFont().deriveFont(Font.PLAIN,80F));
+        String text = "PAUSED"; // teks saat pause
+        int x = getXforCenteredText(text); // text berada ditengah
+
+        int y = gp.screenHeight/2; // lokasi text pause y
+
+        g2.drawString(text, x, y); // gambar text pause
+    }
+
+    // Fungsi memuat frame dialogue
+    public void drawDialogueScreen() {
+        int x = gp.tileSize; // lokasi dialog x / Horizontal
+        int y = gp.tileSize/2; // lokasi dialog y / Vertikal
+        int width = gp.screenWidth - (gp.tileSize*2 ); // lebar frame
+        int height = gp.tileSize*3 + (gp.tileSize/2); // tinggi frame
+
+        drawSubWindow(x, y, width, height); // memuat frame
+
+        g2.setFont(g2.getFont().deriveFont(Font.PLAIN, 32F)); // font dialog
+        x += gp.tileSize/2; // lokasi text dialog x di frame
+        y += gp.tileSize; // lokasi text dialog y di frame
+
+        for (String line : currentDialogue.split("\n")) {
+            g2.drawString(line, x, y); // memuat teks dialog
+            y += 40;
+        }        
+    }
+
+    // Fungsi untuk gambar sub window dialog
+    public void drawSubWindow(int x, int y, int width, int height) {
+        Color c = new Color(0, 0, 0, 210); // warna frame hitam
+        g2.setColor(c); // memuat warna hitam
+        g2.fillRoundRect(x, y, width, height, 35, 35); // gambar balok dialog
+
+        c = new Color(255, 255, 255); // warna border putih
+        g2.setColor(c); // memuat warna border putih
+        g2.setStroke(new BasicStroke(5)); // memuat border ukuran 5
+        g2.drawRoundRect(x+5, y+5, width-10, height-10, 25, 25); // gambar border
+    }
+
+    // fungsi agar text berada ditengah
+    public int getXforCenteredText(String text) {
+        int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth(); // panjang text
+        int x = gp.screenWidth/2 - length/2; // lokasi text pause x
+        return x;
     }
 }

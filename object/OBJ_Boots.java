@@ -4,13 +4,18 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import main.GamePanel;
+
 public class OBJ_Boots extends SuperObject{
+    GamePanel gp; // referensi ke gamepanel
+    
     // fungsi untuk memuat objek boots
-    public OBJ_Boots() {
+    public OBJ_Boots(GamePanel gp) {
         name = "Boots"; // nama object
         // ambil gambar objek
         try {
             image = ImageIO.read(getClass().getResourceAsStream("/res/objects/boots.png"));
+            uTool.scaledImage(image, gp.tileSize, gp.tileSize); // ubah ukuran gambar sesuai tile
         } catch (IOException e) {
             // TODO: handle exception
         }

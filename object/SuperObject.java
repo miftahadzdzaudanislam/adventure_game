@@ -5,15 +5,17 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import main.GamePanel;
+import main.UtilityTool;
 
 public class SuperObject {
     public BufferedImage image; // var gambar objek
     public String name; // var nama objek
     public boolean collision = false; // var tabrakan objek
     public int worldX, worldY; // var lokasi objek
-    public Rectangle solidArea = new Rectangle(0, 0, 40, 40); // instance persegi area
+    public Rectangle solidArea = new Rectangle(0, 0, 60, 60); // instance persegi area
     public int solidAreaDX = 0; // var area objek x
     public int solidAreaDY = 0; // var area objek y
+    public UtilityTool uTool = new UtilityTool(); // instance utility tool
 
     // fungsi menggambar objek
     public void draw(Graphics2D g2, GamePanel gp) {

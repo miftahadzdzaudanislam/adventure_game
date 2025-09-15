@@ -136,4 +136,108 @@ public class CollisionChecker {
 
         return index; // mengembalikan index
     }
+
+    // fungsi tambaran entity
+    public int checkEntity(Entity entity, Entity[] target){
+        int index = 999; // default nilai tidak ada objek
+
+        for (int i = 0; i < target.length; i++) {
+            if (target[i] != null) {
+                // Menyimpan posisi area solid entitas
+                entity.solidArea.x = entity.worldX + entity.solidArea.x;
+                entity.solidArea.y = entity.worldY + entity.solidArea.y;
+
+                // Menyimpan posisi area solid objek
+                target[i].solidArea.x = target[i].worldX + target[i].solidArea.x;
+                target[i].solidArea.y = target[i].worldY + target[i].solidArea.y;
+
+                // periksa tabrakan berdasarkan arah
+                switch (entity.direction) {
+                    case "up":
+                        entity.solidArea.y -= entity.speed; // gerak ke atas
+                        if (entity.solidArea.intersects(target[i].solidArea)) { // jika tabrakan
+                            entity.collisionOn = true; // aktifkan tabrakan
+                            index = i; // simpan index objek yang ditabrak
+                        }
+                        break;
+                    case "down":
+                        entity.solidArea.y += entity.speed; // gerak ke bawah
+                        if (entity.solidArea.intersects(target[i].solidArea)) { // jika tabrakan
+                            entity.collisionOn = true; // aktifkan tabrakan
+                            index = i; // simpan index objek yang ditabrak
+                        }
+                        break;
+                    case "left":
+                        entity.solidArea.x -= entity.speed; // gerak ke kiri
+                        if (entity.solidArea.intersects(target[i].solidArea)) { // jika tabrakan
+                            entity.collisionOn = true; // aktifkan tabrakan
+                            index = i; // simpan index objek yang ditabrak
+                        }
+                        break;
+                    case "right":
+                        entity.solidArea.x += entity.speed; // gerak ke kanan
+                        if (entity.solidArea.intersects(target[i].solidArea)) { // jika tabrakan
+                            entity.collisionOn = true; // aktifkan tabrakan
+                            index = i; // simpan index objek yang ditabrak
+                        }
+                        break;
+                }
+
+                // mengembalikan posisi area solid ke posisi awal
+                entity.solidArea.x = entity.solidAreaDX;
+                entity.solidArea.y = entity.solidAreaDY;
+                target[i].solidArea.x = target[i].solidAreaDX;
+                target[i].solidArea.y = target[i].solidAreaDY;
+            }
+        }
+
+        return index; // mengembalikan index
+    }
+
+    // fungsi untuk cek tabrakan player
+    public void checkPlayer(Entity entity) {
+        if (gp.player != null) {
+            // Menyimpan posisi area solid entitas
+            entity.solidArea.x = entity.worldX + entity.solidArea.x;
+            entity.solidArea.y = entity.worldY + entity.solidArea.y;
+
+            // Menyimpan posisi area solid objek
+            gp.player.solidArea.x = gp.player.worldX + gp.player.solidArea.x;
+            gp.player.solidArea.y = gp.player.worldY + gp.player.solidArea.y;
+
+            // periksa tabrakan berdasarkan arah
+            switch (entity.direction) {
+                case "up":
+                    entity.solidArea.y -= entity.speed; // gerak ke atas
+                    if (entity.solidArea.intersects(gp.player.solidArea)) { // jika tabrakan
+                        entity.collisionOn = true; // aktifkan tabrakan
+                    }
+                    break;
+                case "down":
+                    entity.solidArea.y += entity.speed; // gerak ke bawah
+                    if (entity.solidArea.intersects(gp.player.solidArea)) { // jika tabrakan
+                        entity.collisionOn = true; // aktifkan tabrakan
+                    }
+                    break;
+                case "left":
+                    entity.solidArea.x -= entity.speed; // gerak ke kiri
+                    if (entity.solidArea.intersects(gp.player.solidArea)) { // jika tabrakan
+                        entity.collisionOn = true; // aktifkan tabrakan
+                    }
+                    break;
+                case "right":
+                    entity.solidArea.x += entity.speed; // gerak ke kanan
+                    if (entity.solidArea.intersects(gp.player.solidArea)) { // jika tabrakan
+                        entity.collisionOn = true; // aktifkan tabrakan
+                    }
+                    break;
+            }
+
+            // mengembalikan posisi area solid ke posisi awal
+            entity.solidArea.x = entity.solidAreaDX;
+            entity.solidArea.y = entity.solidAreaDY;
+            gp.player.solidArea.x = gp.player.solidAreaDX;
+            gp.player.solidArea.y = gp.player.solidAreaDY;
+        }
+    }
 }
